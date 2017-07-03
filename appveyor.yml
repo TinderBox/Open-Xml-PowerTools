@@ -5,6 +5,10 @@ branches:
   only:
   - /-octiv$/
 
+nuget:
+  account_feed: false
+  project_feed: true
+
 before_build:
   - ps: nuget restore OpenXmlPowerTools.sln
 
