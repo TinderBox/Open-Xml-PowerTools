@@ -13,7 +13,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="OpenXmlPowerTools\bin\Release\OpenXmlPowerTools.dll" target="lib\net47\OpenXmlPowerTools.dll" />
-    <file src="OpenXmlPowerTools\bin\Release\OpenXmlPowerTools.pdb" target="lib\net47\OpenXmlPowerTools.pdb"  />
+    <file src="bin\Release\OpenXmlPowerTools.dll" target="lib\net47\OpenXmlPowerTools.dll" />
+    <file src="bin\Release\OpenXmlPowerTools.pdb" target="lib\net47\OpenXmlPowerTools.pdb"  />
   </files>
 </package>
