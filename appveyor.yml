@@ -16,5 +16,5 @@ build:
   verbosity: minimal
 
 cache:
-  - src\packages -> **\packages.config   
+  - packages -> **\packages.config   
 
