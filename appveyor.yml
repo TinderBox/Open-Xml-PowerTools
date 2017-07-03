@@ -1,6 +1,13 @@
-version: 4.4.0-octiv-{build} # semver please
+version: 4.5.{build} # semver please
 image: Visual Studio 2017
 configuration: Release
+
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
 
 branches:
   only:
