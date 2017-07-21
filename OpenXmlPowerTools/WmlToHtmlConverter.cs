@@ -1439,8 +1439,17 @@ namespace OpenXmlPowerTools
             {
                 style.AddIfMissing("margin", "0");
                 style.AddIfMissing("padding", "0");
+                var abstractNumId = (string)run.Attribute("data-abstractNumId");
+                var numId = (string)run.Attribute("data-numId");
+                var numFmt = (string)run.Attribute("data-numFmt");
+                var ilvl = (string)run.Attribute("data-ilvl");
+
                 var xe = new XElement(Xhtml.span,
                     langAttribute,
+                    abstractNumId != null ? new XAttribute("data-abstractNumId", abstractNumId) : null,
+                    numId != null ? new XAttribute("data-numId", numId) : null,
+                    numFmt != null ? new XAttribute("data-numFmt", numFmt) : null,
+                    ilvl != null ? new XAttribute("data-ilvl", ilvl) : null, 
                     runStartMark,
                     content,
                     runEndMark);

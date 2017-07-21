@@ -31,6 +31,8 @@ using System.Text;
 using System.Xml.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using OpenXmlPowerTools;
+using System.Collections.Generic;
+using HtmlAgilityPack;
 
 class HtmlConverterHelper
 {
@@ -161,7 +163,160 @@ class HtmlConverterHelper
 
                 var htmlString = html.ToString(SaveOptions.DisableFormatting);
                 File.WriteAllText(destFileName.FullName, htmlString, Encoding.UTF8);
+
+                var convertedHtml = ConvertItems(htmlString);
+
+                File.WriteAllText(destFileName.FullName, convertedHtml, Encoding.UTF8);
             }
         }
+    }
+
+    public static string ConvertItems(string htmlString)
+    {
+        var current_num_id = 0;
+        int current_lvl = 0;
+        HtmlNode current_list = null;
+        HtmlNode previous_list_item = null;
+        int last_lvl = 0;
+        HtmlNode new_list = null;
+        HtmlNode next_list = null;
+
+        HtmlDocument doc = new HtmlDocument();
+        doc.LoadHtml(htmlString);
+
+        var listItemSpanNodes = doc.DocumentNode.SelectNodes("//span[@data-abstractnumid]");
+        HtmlNodeCollection allNodes = doc.DocumentNode.ChildNodes;
+
+        foreach (var span in listItemSpanNodes)
+        {
+            int num_id = Convert.ToInt32(span.Attributes["data-numid"].Value);
+            int lvl = Convert.ToInt32(span.Attributes["data-ilvl"].Value);
+            string fmt = span.Attributes["data-numfmt"].Value;
+            bool lvl_changed = false;
+            HtmlNode listItem;
+            bool reset_list;
+
+            switch (fmt)
+            {
+                case "lowerLetter":
+                    fmt = "lower-alpha";
+                    break;
+                case "lowerRoman":
+                    fmt = "lower-roman";
+                    break;
+                case "upperLetter":
+                    fmt = "upper-alpha";
+                    break;
+                case "upperRoman":
+                    fmt = "upper-roman";
+                    break;
+            }
+
+            if (lvl > current_lvl || lvl < current_lvl)
+            {
+                lvl_changed = true;
+            }
+
+            current_num_id = num_id;
+            current_lvl = lvl;
+            listItem = span.ParentNode;
+            listItem.Name = "li";
+            if (listItem.Attributes.Contains("style"))
+            {
+                string styles = listItem.Attributes["style"].Value;
+                listItem.SetAttributeValue("style", styles + "; list-style-type: " + fmt);
+            }
+            else
+            {
+                listItem.Attributes.Add("style", "list-style-type: " + fmt);
+            }
+
+            span.Remove();
+
+            if (current_list == null || lvl_changed)
+            {
+                HtmlNode nodeUL = doc.CreateElement("ul");
+                new_list = nodeUL;
+
+                if (current_list == null)
+                {
+                    listItem.ParentNode.InsertBefore(new_list, listItem);
+                }
+                else
+                {
+                    if (lvl < last_lvl)
+                    {
+                        next_list = previous_list_item.Ancestors("ul").Last();
+
+                        if (lvl > 0)
+                        {
+                            string selector = string.Concat(Enumerable.Repeat("li > ul > ", lvl));
+                            if (selector.EndsWith(" > "))
+                            {
+                                selector = selector.Substring(0, selector.LastIndexOf(" > "));
+                            }
+
+                            if (next_list.QuerySelectorAll(selector).Count > 0)
+                            {
+                                next_list = next_list.QuerySelectorAll(selector).First();
+                            }
+                        }
+
+                        new_list = next_list;
+                    }
+                    else
+                    {
+                        new_list.Remove();
+                        previous_list_item.AppendChild(new_list);
+                    }
+                }
+
+                current_list = new_list;
+            }
+
+            reset_list = false;
+            HtmlNode next_object = listItem.NextSibling;
+            if (next_object != null)
+            {
+                HtmlNode next_li_span = null;
+                var a = next_object.QuerySelectorAll("span[data-numid]");
+                if (a.Count > 0)
+                {
+                    next_li_span = a.First();
+                }
+
+                if (next_li_span != null)
+                {
+                    int next_num_id = Convert.ToInt32(next_li_span.Attributes["data-numid"].Value);
+
+                    if (next_num_id != current_num_id)
+                    {
+                        reset_list = true;
+                    }
+                }
+                else
+                {
+                    reset_list = true;
+                }
+            }
+            else
+            {
+                reset_list = true;
+            }
+
+            listItem.Remove();
+            current_list.AppendChild(listItem);
+            previous_list_item = listItem;
+
+            last_lvl = lvl;
+
+            lvl_changed = false;
+            if (reset_list)
+            {
+                current_list = null;
+            }
+        }
+
+        return doc.DocumentNode.OuterHtml;
     }
 }
